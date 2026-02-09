@@ -1,0 +1,1 @@
+2026/01/12 08:40:51.0174: [28273]:  WARNING:       mongoc: Falling back to malloc for counters.
