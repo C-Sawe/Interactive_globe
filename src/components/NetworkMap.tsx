@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import DeckGL from '@deck.gl/react';
 import { 
   GeoJsonLayer, 
@@ -12,7 +12,7 @@ import {
   _GlobeView as GlobeView, 
   FlyToInterpolator, 
   AmbientLight, 
-  DirectionalLight, 
+  //DirectionalLight, 
   LightingEffect 
 } from '@deck.gl/core';
 import * as turf from '@turf/turf';
@@ -81,7 +81,7 @@ const REGION_LOCATIONS: Record<string, [number, number]> = {
 };
 
 const ambientLight = new AmbientLight({ color: [255, 255, 255], intensity: 3.0});
-const directionalLight = new DirectionalLight({ color: [255, 255, 255], intensity: 1.0, direction: [0.5, 1, 0.5] });
+//const directionalLight = new DirectionalLight({ color: [255, 255, 255], intensity: 1.0, direction: [0.5, 1, 0.5] });
 const lightingEffect = new LightingEffect({ ambientLight});
 
 const ACTIVE_REGIONS: Record<string, any> = {
@@ -597,7 +597,7 @@ const MapLegend = ({
 };
 
 // --- QUICK NAV ---
-const QuickCountyNav = ({ countyData, viewState, setViewState, setZoomedCounty, setSelectedCounty, setAutoRotate }: any) => {
+const QuickCountyNav = ({ countyData, setViewState, setZoomedCounty, setSelectedCounty, setAutoRotate }: any) => {
   const [showQuickNav, setShowQuickNav] = useState(false);
 
   const handleCountyFly = (countyName: string) => {
