@@ -77,14 +77,24 @@ const REGION_LOCATIONS: Record<string, [number, number]> = {
   "MERU": [37.6500, 0.0500],
   "KIAMBU": [36.8333, -1.1667],
   "MOMBASA": [39.6682, -4.0435],
-  "BUNGOMA": [34.5606, 0.5635]
+  "BUNGOMA": [34.5606, 0.5635],
+  "KWALE": [39.4521, -4.1737],
+  "KILIFI": [39.9093, -3.5107],
+  "KISUMU": [34.7680, -0.0917],
+  "MACHAKOS": [37.2634, -1.5177],
+  "LAMU": [40.9006, -2.2696],
+  // Uganda , Congo  and Rwanda regions
+  "KAMPALA": [32.5825, 0.3476],
+  "KIGALI": [30.0619, -1.9441],
+  "GOMA": [29.2205, -1.6585],
+  
 };
 
 const ambientLight = new AmbientLight({ color: [255, 255, 255], intensity: 3.0});
-//const directionalLight = new DirectionalLight({ color: [255, 255, 255], intensity: 1.0, direction: [0.5, 1, 0.5] });
 const lightingEffect = new LightingEffect({ ambientLight});
 
 const ACTIVE_REGIONS: Record<string, any> = {
+  // ... Kenya regions ...
   "NAIROBI": { name: "NAIROBI", fileName: "NAIROBI.geojson" },
   "KAJIADO": { name: "KAJIADO", fileName: "KAJIADO.geojson" },
   "KAKAMEGA": { name: "KAKAMEGA", fileName: "KAKAMEGA.geojson" },
@@ -96,17 +106,41 @@ const ACTIVE_REGIONS: Record<string, any> = {
   "MERU": { name: "MERU", fileName: "MERU.geojson" },
   "KIAMBU": { name: "KIAMBU", fileName: "KIAMBU.geojson" },
   "MOMBASA": { name: "MOMBASA", fileName: "MOMBASA.geojson" },
-  "BUNGOMA": { name: "BUNGOMA", fileName: "BUNGOMA.geojson" }
+  "BUNGOMA": { name: "BUNGOMA", fileName: "BUNGOMA.geojson" },
+  "KWALE": { name: "KWALE", fileName: "KWALE.geojson" },
+  "KILIFI": { name: "KILIFI", fileName: "KILIFI.geojson" },
+  "KISUMU": { name: "KISUMU", fileName: "KISUMU.geojson" },
+  "MACHAKOS": { name: "MACHAKOS", fileName: "MACHAKOS.geojson" },
+  "LAMU": { name: "LAMU", fileName: "LAMU.geojson" },
+
+  // Uganda, Rwanda and Congo regions
+  "KAMPALA": { name: "KAMPALA", fileName: "geoBoundaries-UGA-ADM1.geojson" },
+  "KIGALI": { name: "KIGALI", fileName: "geoBoundaries-RWA-ADM2.geojson" },
+  "GOMA": { name: "GOMA", fileName: "geoBoundaries-COD-ADM1.geojson" }
 };
 
 const USER_STATS: Record<string, number> = {
   "NAIROBI": 4520, "KAJIADO": 850, "KAKAMEGA": 1200, "ISIOLO": 340,
   "TRANS NZOIA": 920, "UASIN GISHU": 2100, "TURKANA": 150, "NAKURU": 1800,
-  "MERU": 670, "KIAMBU": 3100, "MOMBASA": 2800, "BUNGOMA": 1100
+  "MERU": 670, "KIAMBU": 3100, "MOMBASA": 2800, "BUNGOMA": 1100,"KWALE": 890,
+  "KILIFI": 1250,
+  "KISUMU": 2100,
+  "MACHAKOS": 1600,
+  "LAMU": 430,
+
+// Uganda, Rwanda and Congo stats
+  "KAMPALA": 1540, 
+  "KIGALI": 980, 
+  "GOMA": 620
 };
 
 const INITIAL_VIEW_STATE: MapViewState = {
-  longitude: 20, latitude: 0, zoom: 3.0, pitch: 25, bearing: 0
+  longitude: 20, latitude: -1,
+   zoom: 2.5,
+    pitch: 25, 
+   bearing: 0 ,
+   transitionDuration: 0,
+  transitionInterpolator: undefined
 };
 
 const CONTROLLER_CONFIG = {
@@ -374,8 +408,31 @@ const VilcomHeader = ({ zoom }: { zoom: number }) => {
 };
 
 // --- CAMERA CONTROLS ---
-const CameraControls = ({ viewState, setViewState,  setZoomedCounty, setAutoRotate }: any) => {
   const zoomStep = 0.5;
+
+  const CameraControls = ({ viewState, setViewState, setAutoRotate }: any) => {
+  const flyTo = (target: keyof typeof CAMERA_TARGETS) => {
+    setAutoRotate(false);
+    setViewState({
+      ...viewState,
+      ...CAMERA_TARGETS[target],
+      transitionDuration: 2000,
+      transitionInterpolator: new FlyToInterpolator()
+
+      
+    });
+
+
+  };
+
+  const CAMERA_TARGETS = {
+  GLOBE: { longitude: 20, latitude: 0, zoom: 0.8, pitch: 0, bearing: 0 },
+  EAST_AFRICA: { longitude: 34.0, latitude: -1.5, zoom: 4.5, pitch: 45, bearing: 10 },
+  KENYA: { longitude: 37.9062, latitude: 0.0236, zoom: 6.0, pitch: 40, bearing: 0 },
+  UGANDA: { longitude: 32.2903, latitude: 1.3733, zoom: 6.5, pitch: 40, bearing: 0 },
+  KIGALI: { longitude: 30.0619, latitude: -1.9441, zoom: 7.5, pitch: 40, bearing: 0 },
+  NORTH_KIVU: { longitude: 29.2205, latitude: -1.6585, zoom: 8.5, pitch: 45, bearing: 0 }
+};
  
   
   const updateView = (updates: any) => {
@@ -391,7 +448,7 @@ const CameraControls = ({ viewState, setViewState,  setZoomedCounty, setAutoRota
   const handleHome = () => {
     setAutoRotate(true);
     setViewState(INITIAL_VIEW_STATE);
-    setZoomedCounty(null);
+   
   };
 
   const buttonStyle = {
@@ -422,6 +479,26 @@ const CameraControls = ({ viewState, setViewState,  setZoomedCounty, setAutoRota
     border: 'none',
     boxShadow: '0 2px 8px rgba(13, 71, 161, 0.3)'
   };
+
+  const navButtonStyle = (flagUrl?: string) => ({
+    padding: '12px 8px',
+    borderRadius: 0, // Sharp corners as requested
+    cursor: 'pointer',
+    fontSize: '11px',
+    fontWeight: 800,
+    color: flagUrl ? 'white' : THEME.blueDark,
+    border: `1px solid ${THEME.glassStroke}`,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '4px',
+    transition: 'all 0.2s',
+    textShadow: flagUrl ? '1px 1px 2px rgba(0,0,0,0.8)' : 'none',
+    background: flagUrl 
+      ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${flagUrl}) center/cover no-repeat`
+      : 'white',
+  }); 
 
   return (
     <div style={{
@@ -466,17 +543,44 @@ const CameraControls = ({ viewState, setViewState,  setZoomedCounty, setAutoRota
           onClick={handleHome}
           style={{ ...buttonStyle, flex: 1, gap: 6 }}
         >
-          <Home size={16} /> Home
+          <Home size={16} /> Globe view
         </button>
         <button
-          onClick={() => updateView({ longitude: TARGET_LOCATION[0], latitude: TARGET_LOCATION[1], zoom: 6.0, pitch: 60, bearing: 90, transitionDuration: 2500 })}
+         onClick={()=> flyTo('EAST_AFRICA')}
           style={{ 
             ...activeButtonStyle, 
             flex: 1, gap: 6 
           }}
         >
-          <Target size={16} /> Kenya
+          <Target size={16} /> East Africa
         </button>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+        <button 
+          onClick={() => flyTo('KENYA')} 
+          style={navButtonStyle('https://flagcdn.com/w160/ke.png')}
+        >
+          KENYA
+        </button>
+        <button 
+          onClick={() => flyTo('UGANDA')} 
+          style={navButtonStyle('https://flagcdn.com/w160/ug.png')}
+        >
+          UGANDA
+        </button>
+        <button 
+          onClick={() => flyTo('KIGALI')} 
+          style={navButtonStyle('https://flagcdn.com/w160/rw.png')}
+        >
+          RWANDA
+        </button>
+        <button 
+          onClick={() => flyTo('NORTH_KIVU')} 
+          style={navButtonStyle('https://flagcdn.com/w160/cd.png')}
+        >
+          DRC CONGO
+        </button>
+      </div> 
       </div>
       
       {/* Info Bar */}
@@ -498,6 +602,7 @@ const CameraControls = ({ viewState, setViewState,  setZoomedCounty, setAutoRota
 };
 
 // --- MAP LEGEND ---
+
 const MapLegend = ({ 
  
 }: any) => {
@@ -576,7 +681,7 @@ const MapLegend = ({
           <div style={{ height: 1, background: 'rgba(0,0,0,0.05)', margin: '12px 0' }} />
 
           
-
+          {/* --- UPDATED STATS BLOCK --- */}
           <div style={{ 
             marginTop: 16, 
             padding: '12px',
@@ -585,9 +690,10 @@ const MapLegend = ({
             color: 'white'
           }}>
             <div style={{ fontSize: 10, opacity: 0.8, textTransform: 'uppercase' }}>Network Coverage</div>
-            <div style={{ fontSize: 20, fontWeight: 'bold', marginTop: 2 }}>12 Counties</div>
+            <div style={{ fontSize: 20, fontWeight: 'bold', marginTop: 2 }}>4 East African Countries</div>
+             <div style={{ fontSize: 15, fontWeight: 'bold', marginTop: 2 }}>19 Kenyan Counties </div>
             <div style={{ fontSize: 12, opacity: 0.9 }}>
-              {Object.values(USER_STATS).reduce((a, b) => a + b, 0).toLocaleString()} Users
+              133,316 Users
             </div>
           </div>
         </>
@@ -844,21 +950,24 @@ const NetworkMap = () => {
   const activeCountyKeys = useMemo(() => Object.keys(ACTIVE_REGIONS), []);
 
   // --- AUTO ROTATE LOGIC ---
-  useEffect(() => {
-    let animationFrame: number;
-    if (autoRotate) {
-      const animate = () => {
-        setViewState((v: any) => ({
-          ...v,
-          longitude: v.longitude + 0.1, 
-          transitionDuration: 0 
-        }));
-        animationFrame = requestAnimationFrame(animate);
-      };
-      animate();
-    }
-    return () => cancelAnimationFrame(animationFrame);
-  }, [autoRotate]);
+useEffect(() => {
+  let animationFrame: number;
+  
+  // Only rotate if autoRotate is enabled AND we are not currently in a transition
+  if (autoRotate && !viewState.transitionDuration) {
+    const animate = () => {
+      setViewState((v: any) => ({
+        ...v,
+        longitude: v.longitude + 0.05,
+        transitionDuration: 0, // Keep this at 0 for smooth frame-by-frame rotation
+        transitionInterpolator: null
+      }));
+      animationFrame = requestAnimationFrame(animate);
+    };
+    animate();
+  }
+  return () => cancelAnimationFrame(animationFrame);
+}, [autoRotate, !!viewState.transitionDuration]); // Re-run if transition state changes
 
   // --- PULSATING LOGIC ---
   useEffect(() => {
@@ -971,18 +1080,42 @@ const NetworkMap = () => {
     }
   }, [viewState.zoom]);
 
-  useEffect(() => {
+ useEffect(() => {
     const loadData = async () => {
       try {
         const hybridRes = await fetch(HYBRID_MAP_URL).then(r => r.json());
         setHybridData(hybridRes);
+        
+        // --- ANIMATION SEQUENCE ---
+        
+        // 1. First, Zoom OUT to see the whole globe (Cinematic pullback)
+        setTimeout(() => {
+           setViewState(curr => ({
+             ...curr,
+             zoom: 0.8,         // Pull back far
+             latitude: 0,
+             longitude: 20,     // Center loosely on Africa/Europe
+             pitch: 0,          // Reset pitch for the overview
+             transitionDuration: 2000,
+             transitionInterpolator: new FlyToInterpolator()
+           }));
+        }, 500); // Start shortly after load
+
+        // 2. Then, Fly IN to East Africa Focus
         setTimeout(() => {
           setViewState(curr => ({
-            ...curr, longitude: TARGET_LOCATION[0], latitude: TARGET_LOCATION[1],
-            zoom: 6.0, pitch: 60, bearing: 90, 
-            transitionDuration: 3000, transitionInterpolator: new FlyToInterpolator()
+            ...curr, 
+            // Center roughly between DRC, Uganda, and Kenya
+            longitude: 34.0, 
+            latitude: -1.5,   
+            zoom: 4.5,          // Perfect regional zoom
+            pitch: 45,          // Angled 3D view
+            bearing: 10,        // Slight rotation for style
+            transitionDuration: 5000, // Long, smooth approach
+            transitionInterpolator: new FlyToInterpolator({ speed: 1.2 })
           }));
-        }, 1000);
+        }, 3000); // Wait for the zoom out to finish (500ms + 2000ms + buffer)
+
       } catch (err) { console.error("Error loading map data:", err); }
     };
     loadData();
@@ -1093,6 +1226,42 @@ const NetworkMap = () => {
     });
   }, [zoomedCounty, countyData]);
 
+
+  const detailedBoundariesLayer = useMemo(() => {
+    // 1. Extract valid GeoJSON features from our loaded data
+    const features = Object.values(countyData)
+      .map((data: any) => data.boundary)
+     .filter(data => data && data.boundary && data.boundary.features)  // remove empty entries 
+
+    if (features.length === 0) return null;
+
+    return new GeoJsonLayer({
+      id: 'detailed-boundaries-overlay',
+      data: features,
+      filled: true,
+      stroked: true,
+      // Use the same styling logic as the base map
+      getFillColor: (d: any) => {
+        // Since we are iterating raw GeoJSON features, we need to find the name
+        // The properties key might vary depending on your GeoJSON source
+        const name = d.properties?.name || d.properties?.county_name; 
+        return getRegionColor(name);
+      },
+      getLineColor: NETWORK_STYLES.BORDER_COLOR,
+      getLineWidth: 200,
+      getElevation: (d: any) => {
+        const name = d.properties?.name || d.properties?.county_name;
+        return getElevationForRegion(name) + 500; // Slight lift to prevent Z-fighting
+      },
+      extruded: true,
+      pickable: true,
+      onClick: onLayerClick,
+      updateTriggers: {
+        getFillColor: [zoomedCounty, highlightIndex]
+      }
+    });
+  }, [countyData, zoomedCounty, highlightIndex]);
+
   const layers = [
     new SolidPolygonLayer({
       id: 'ocean',
@@ -1122,6 +1291,8 @@ const NetworkMap = () => {
         getFillColor: [zoomedCounty, highlightIndex]
       }
     }),
+
+    ...(detailedBoundariesLayer ? [detailedBoundariesLayer] : []),
     new PathLayer({
       id: 'land-masses-borders',
       data: borderData,
@@ -1190,7 +1361,10 @@ const NetworkMap = () => {
         views={new GlobeView()}
         effects={[lightingEffect]}
         viewState={viewState}
-        onViewStateChange={({viewState}) => setViewState(viewState as any)}
+       onViewStateChange={({ viewState }) => {  
+      const { transitionDuration, transitionInterpolator, ...cleanViewState } = viewState;
+      setViewState(cleanViewState as any);
+       }}
         onInteractionStateChange={handleInteractionStateChange}
         controller={CONTROLLER_CONFIG}
         layers={layers}
