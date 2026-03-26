@@ -36,7 +36,7 @@ interface MapViewState {
   transitionEasing?: (t: number) => number;
 }
 
-const TARGET_LOCATION: [number, number] = [37.9062, 0.0236];
+
 const RANCO_PLAZA_HQ: [number, number] = [36.8200, -1.2858];
 const HYBRID_MAP_URL = "/countries.geo.json";
 const ZOOM_THRESHOLD = 6.0;
@@ -427,7 +427,7 @@ const VilcomHeader = ({ zoom }: { zoom: number }) => {
 
   const CAMERA_TARGETS = {
   GLOBE: { longitude: 20, latitude: 0, zoom: 0.8, pitch: 0, bearing: 0 },
-  EAST_AFRICA: { longitude: 34.0, latitude: -1.5, zoom: 4.5, pitch: 45, bearing: 10 },
+  EAST_AFRICA: { longitude: 34.0, latitude: -1.5, zoom: 5.5, pitch: 45, bearing: 10 },
   KENYA: { longitude: 37.9062, latitude: 0.0236, zoom: 6.0, pitch: 40, bearing: 0 },
   UGANDA: { longitude: 32.2903, latitude: 1.3733, zoom: 6.5, pitch: 40, bearing: 0 },
   KIGALI: { longitude: 30.0619, latitude: -1.9441, zoom: 7.5, pitch: 40, bearing: 0 },
@@ -948,6 +948,7 @@ const NetworkMap = () => {
 
   const activeCountyNames = useMemo(() => new Set(Object.values(ACTIVE_REGIONS).map(r => r.name)), []);
   const activeCountyKeys = useMemo(() => Object.keys(ACTIVE_REGIONS), []);
+  const ROTATION_SPEED = 0.1
 
   // --- AUTO ROTATE LOGIC ---
 useEffect(() => {
@@ -958,8 +959,8 @@ useEffect(() => {
     const animate = () => {
       setViewState((v: any) => ({
         ...v,
-        longitude: v.longitude + 0.05,
-        transitionDuration: 0, // Keep this at 0 for smooth frame-by-frame rotation
+        longitude: v.longitude + ROTATION_SPEED,
+        transitionDuration: 0, 
         transitionInterpolator: null
       }));
       animationFrame = requestAnimationFrame(animate);
@@ -1080,46 +1081,36 @@ useEffect(() => {
     }
   }, [viewState.zoom]);
 
- useEffect(() => {
-    const loadData = async () => {
-      try {
-        const hybridRes = await fetch(HYBRID_MAP_URL).then(r => r.json());
-        setHybridData(hybridRes);
-        
-        // --- ANIMATION SEQUENCE ---
-        
-        // 1. First, Zoom OUT to see the whole globe (Cinematic pullback)
-        setTimeout(() => {
-           setViewState(curr => ({
-             ...curr,
-             zoom: 0.8,         // Pull back far
-             latitude: 0,
-             longitude: 20,     // Center loosely on Africa/Europe
-             pitch: 0,          // Reset pitch for the overview
-             transitionDuration: 2000,
-             transitionInterpolator: new FlyToInterpolator()
-           }));
-        }, 500); // Start shortly after load
+useEffect(() => {
+  const loadData = async () => {
+    try {
+      const hybridRes = await fetch(HYBRID_MAP_URL).then(r => r.json());
+      setHybridData(hybridRes);
+      
+      // Start rotating immediately
+      setAutoRotate(true);
 
-        // 2. Then, Fly IN to East Africa Focus
-        setTimeout(() => {
-          setViewState(curr => ({
-            ...curr, 
-            // Center roughly between DRC, Uganda, and Kenya
-            longitude: 34.0, 
-            latitude: -1.5,   
-            zoom: 4.5,          // Perfect regional zoom
-            pitch: 45,          // Angled 3D view
-            bearing: 10,        // Slight rotation for style
-            transitionDuration: 5000, // Long, smooth approach
-            transitionInterpolator: new FlyToInterpolator({ speed: 1.2 })
-          }));
-        }, 3000); // Wait for the zoom out to finish (500ms + 2000ms + buffer)
+      // --- SINGLE ANIMATION SEQUENCE ---
+      setTimeout(() => {
+        setViewState(curr => ({
+          ...curr,
+          longitude: 20,     // Starting center point
+          latitude: 0,
+          zoom: 2.5,         
+          pitch: 0,         
+          bearing: 0,
+          transitionDuration: 3000,
+          transitionInterpolator: new FlyToInterpolator()
+        }));
+      }, 500);
 
-      } catch (err) { console.error("Error loading map data:", err); }
-    };
-    loadData();
-  }, []);
+
+    } catch (err) { 
+      console.error("Error loading map data:", err); 
+    }
+  };
+  loadData();
+}, []);
 
   const isZoomedIn = viewState.zoom > ZOOM_THRESHOLD;
   useEffect(() => {
