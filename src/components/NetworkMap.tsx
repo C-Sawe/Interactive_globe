@@ -136,7 +136,7 @@ const USER_STATS: Record<string, number> = {
 
 const INITIAL_VIEW_STATE: MapViewState = {
   longitude: 20, latitude: -1,
-   zoom: 2.5,
+   zoom: 2.7,
     pitch: 25, 
    bearing: 0 ,
    transitionDuration: 0,
@@ -948,28 +948,52 @@ const NetworkMap = () => {
 
   const activeCountyNames = useMemo(() => new Set(Object.values(ACTIVE_REGIONS).map(r => r.name)), []);
   const activeCountyKeys = useMemo(() => Object.keys(ACTIVE_REGIONS), []);
-  const ROTATION_SPEED = 0.1
+  const ROTATION_SPEED = 0.15
 
-  // --- AUTO ROTATE LOGIC ---
-useEffect(() => {
-  let animationFrame: number;
-  
-  // Only rotate if autoRotate is enabled AND we are not currently in a transition
-  if (autoRotate && !viewState.transitionDuration) {
-    const animate = () => {
-      setViewState((v: any) => ({
-        ...v,
-        longitude: v.longitude + ROTATION_SPEED,
-        transitionDuration: 0, 
-        transitionInterpolator: null
-      }));
-      animationFrame = requestAnimationFrame(animate);
-    };
-    animate();
-  }
-  return () => cancelAnimationFrame(animationFrame);
-}, [autoRotate, !!viewState.transitionDuration]); // Re-run if transition state changes
+// --- AUTO ROTATE LOGIC ---
+  useEffect(() => {
+    let animationFrame: number;
+    
+    // Rotation Config
+    const NORMAL_SPEED = 0.35;
+    const SLOW_SPEED = 0.015;     // The minimum speed when directly over East Africa
+    const TARGET_LON = 35;        // Center of East Africa coverage (Kenya/Uganda)
+    const SLOW_ZONE_RADIUS = 30;  // How many degrees away to start slowing down
 
+    // Only rotate if autoRotate is enabled AND we are not currently in a transition
+    if (autoRotate && !viewState.transitionDuration) {
+      const animate = () => {
+        setViewState((v: any) => {
+          // 1. Normalize current longitude to always be between -180 and 180
+          const normalizedLon = ((v.longitude + 180) % 360 + 360) % 360 - 180;
+          
+          // 2. Calculate distance from East Africa
+          let dist = Math.abs(normalizedLon - TARGET_LON);
+          if (dist > 180) dist = 360 - dist; // Account for globe wrap-around
+
+          // 3. Calculate dynamic speed
+          let currentSpeed = NORMAL_SPEED;
+          if (dist < SLOW_ZONE_RADIUS) {
+            // Smooth easing curve (factor goes from 0 at the center to 1 at the edge)
+            const factor = Math.pow(dist / SLOW_ZONE_RADIUS, 2); 
+            // Blend between SLOW_SPEED and NORMAL_SPEED based on distance
+            currentSpeed = SLOW_SPEED + (NORMAL_SPEED - SLOW_SPEED) * factor;
+          }
+
+          return {
+            ...v,
+            longitude: v.longitude + currentSpeed,
+            transitionDuration: 0, 
+            transitionInterpolator: null
+          };
+        });
+        
+        animationFrame = requestAnimationFrame(animate);
+      };
+      animate();
+    }
+    return () => cancelAnimationFrame(animationFrame);
+  }, [autoRotate, !!viewState.transitionDuration]);
   // --- PULSATING LOGIC ---
   useEffect(() => {
     const isKenyaView = viewState.zoom > 3.5 && viewState.zoom < 8 && !zoomedCounty;
